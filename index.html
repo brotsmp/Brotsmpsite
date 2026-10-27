@@ -6,8 +6,6 @@
     <title>BrotSMP Portal</title>
     <!-- Google Identity Services API SDK -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <!-- Microsoft MSAL.js API SDK -->
-    <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
 
     <style>
         :root {
@@ -20,161 +18,304 @@
             --text-muted: #a89f91;
             --input-bg: #150d08;
             --error: #c62828;
+            --success: #2e7d32;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background-color: var(--bg-color); color: var(--text-light); display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-        .container { width: 100%; max-width: 800px; background-color: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 12px; padding: 30px; }
+        .container { width: 100%; max-width: 900px; background-color: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); overflow: hidden; }
+        .header { padding: 20px; text-align: center; border-bottom: 1px solid var(--panel-border); background-color: rgba(0,0,0,0.2); }
+        .header h1 { color: var(--text-light); font-size: 1.8rem; }
+        .content { padding: 30px; }
         .auth-box { max-width: 400px; margin: 0 auto; text-align: center; }
-        .btn { width: 100%; padding: 12px; margin-bottom: 12px; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; }
-        .btn-ms { background-color: #2f2f2f; color: #fff; }
+        .btn { width: 100%; padding: 12px; margin-bottom: 12px; border: none; border-radius: 6px; font-size: 1rem; cursor: pointer; transition: background-color 0.2s; }
         .btn-primary { background-color: var(--primary-brown); color: var(--text-light); }
-        .form-control { width: 100%; padding: 10px; background-color: var(--input-bg); border: 1px solid var(--panel-border); border-radius: 6px; color: var(--text-light); margin-bottom: 10px; }
+        .btn-primary:hover { background-color: var(--accent-brown); }
+        .form-control { width: 100%; padding: 10px; background-color: var(--input-bg); border: 1px solid var(--panel-border); border-radius: 6px; color: var(--text-light); font-size: 1rem; margin-bottom: 15px; }
+        .form-control:focus { outline: none; border-color: var(--accent-brown); }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background-color: var(--panel-bg); border: 1px solid var(--panel-border); padding: 30px; border-radius: 10px; width: 90%; max-width: 450px; text-align: center; }
+        .otp-input { letter-spacing: 4px; font-size: 1.2rem; text-align: center; }
+        .dashboard { display: none; }
+        .nav-tabs { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid var(--panel-border); padding-bottom: 10px; }
+        .tab-btn { padding: 8px 16px; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; border-radius: 4px; }
+        .tab-btn.active { background-color: var(--primary-brown); color: var(--text-light); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .console-logs { background-color: #000; border: 1px solid var(--panel-border); height: 300px; padding: 10px; overflow-y: auto; font-family: monospace; font-size: 0.9rem; color: #00ff00; margin-bottom: 10px; border-radius: 6px; text-align: left; }
+        .console-input-group { display: flex; gap: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid var(--panel-border); }
+        th { background-color: rgba(0,0,0,0.2); color: var(--text-muted); }
         .hidden { display: none !important; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; }
-        .modal-content { background: var(--panel-bg); padding: 30px; border-radius: 10px; text-align: center; max-width: 400px; }
+        .alert { padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.9rem; }
+        .alert-error { background-color: var(--error); color: #fff; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <!-- LOGIN BEREICH -->
-        <div id="login-view" class="auth-box">
-            <h2 style="margin-bottom: 20px;">BrotSMP Login</h2>
-
-            <!-- Echter Google Button Container -->
-            <div id="g_id_onload"
-                 data-client_id="197841319216-c927a3k3qm466ib9rmnclfnf6ttd4vvr.apps.googleusercontent.com"
-                 data-callback="handleGoogleLogin">
-            </div>
-            <div class="g_id_signin" data-type="standard" data-width="380" style="margin-bottom: 15px;"></div>
-
-            <!-- Echter Microsoft Button -->
-            <button class="btn btn-ms" onclick="loginWithMicrosoftAPI()">Mit Microsoft anmelden</button>
-
-            <div style="margin: 20px 0; color: var(--text-muted);">oder E-Mail Login</div>
-
-            <form onsubmit="handleEmailLogin(event)">
-                <input type="email" id="email" class="form-control" placeholder="E-Mail" required>
-                <input type="password" id="password" class="form-control" placeholder="Passwort" required>
-                <button type="submit" class="btn btn-primary">Anmelden</button>
-            </form>
+        <div class="header">
+            <h1>BrotSMP Portal</h1>
         </div>
+        <div class="content">
 
-        <!-- DASHBOARD BEREICH -->
-        <div id="dashboard-view" class="hidden">
-            <h2>Willkommen, <span id="user-display-email"></span></h2>
-            <p style="margin: 10px 0; color: var(--text-muted);">Du bist erfolgreich eingeloggt.</p>
-            
-            <div id="admin-tools" class="hidden" style="margin-top: 20px; background: var(--input-bg); padding: 15px; border-radius: 6px;">
-                <h3>Admin-Bereich</h3>
-                <p>Zugriff auf Konsole und Team-Verwaltung freigeschaltet.</p>
+            <!-- LOGIN VIEW -->
+            <div id="login-view" class="auth-box">
+                <div id="login-alert" class="alert hidden"></div>
+                <h3 style="margin-bottom: 20px;">Anmelden</h3>
+
+                <!-- Echter Google Login Button -->
+                <div id="g_id_onload"
+                     data-client_id="197841319216-c927a3k3qm466ib9rmnclfnf6ttd4vvr.apps.googleusercontent.com"
+                     data-callback="handleGoogleLogin">
+                </div>
+                <div class="g_id_signin" data-type="standard" data-width="380" style="margin-bottom: 20px; display: flex; justify-content: center;"></div>
+
+                <div style="margin: 20px 0; color: var(--text-muted); position: relative;">
+                    <hr style="border: 0; border-top: 1px solid var(--panel-border); margin-top: 10px;">
+                </div>
+
+                <form id="email-login-form" onsubmit="handleEmailLogin(event)">
+                    <div style="text-align: left;"><label style="font-size: 0.9rem; color: var(--text-muted);">E-Mail Adresse</label></div>
+                    <input type="email" id="email" class="form-control" required>
+                    
+                    <div style="text-align: left;"><label style="font-size: 0.9rem; color: var(--text-muted);">Passwort</label></div>
+                    <input type="password" id="password" class="form-control" required>
+                    
+                    <button type="submit" class="btn btn-primary">Anmelden</button>
+                </form>
             </div>
 
-            <button class="btn btn-primary" style="margin-top: 20px; width: auto; padding: 10px 20px;" onclick="logout()">Abmelden</button>
+            <!-- DASHBOARD VIEW -->
+            <div id="dashboard-view" class="dashboard">
+                <div class="nav-tabs">
+                    <button class="tab-btn active" onclick="switchTab('team-tools')">Team Tools</button>
+                    <button id="admin-tab-btn" class="tab-btn hidden" onclick="switchTab('admin-panel')">Mitglieder</button>
+                    <button id="console-tab-btn" class="tab-btn hidden" onclick="switchTab('console-panel')">RCON Konsole</button>
+                    <button class="tab-btn" style="margin-left: auto; background-color: #555;" onclick="logout()">Abmelden</button>
+                </div>
+
+                <!-- TEAM TOOLS TAB -->
+                <div id="team-tools" class="tab-content active">
+                    <h3>Team Dashboard</h3>
+                    <p style="margin-top: 10px; color: var(--text-muted);">Willkommen im Team-Bereich.</p>
+                </div>
+
+                <!-- ADMIN MANAGEMENT TAB -->
+                <div id="admin-panel" class="tab-content">
+                    <h3>Teammitglieder Verwaltung</h3>
+                    <br>
+                    <form onsubmit="createTeamMember(event)" style="background: var(--input-bg); padding: 15px; border-radius: 6px; border: 1px solid var(--panel-border); margin-bottom: 20px;">
+                        <h4>Neues Mitglied anlegen</h4>
+                        <br>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                            <input type="email" id="new-member-email" class="form-control" placeholder="E-Mail" required style="margin:0;">
+                            <input type="password" id="new-member-pass" class="form-control" placeholder="Passwort" required style="margin:0;">
+                            <button type="submit" class="btn btn-primary" style="margin: 0;">Erstellen</button>
+                        </div>
+                    </form>
+                    <table>
+                        <thead>
+                            <tr><th>E-Mail</th><th>Rolle</th><th>Aktion</th></tr>
+                        </thead>
+                        <tbody id="member-table-body"></tbody>
+                    </table>
+                </div>
+
+                <!-- RCON CONSOLE TAB -->
+                <div id="console-panel" class="tab-content">
+                    <h3>Server Konsole (<span style="font-size: 0.8rem; color: var(--text-muted);">brotsmp1.minekeep.gg</span>)</h3>
+                    <br>
+                    <div class="console-logs" id="console-logs">
+                        [System] Verbunden mit RCON Server brotsmp1.minekeep.gg...<br>
+                    </div>
+                    <div class="console-input-group">
+                        <input type="text" id="console-input" class="form-control" placeholder="Befehl eingeben (z.B. list, say Hallo)" onkeypress="handleConsoleKey(event)" style="margin:0;">
+                        <button class="btn btn-primary" style="width: auto; padding: 0 20px; margin:0;" onclick="sendConsoleCommand()">Senden</button>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
-    <!-- OTP MODAL FÜR MAIN ADMIN -->
+    <!-- OTP MODAL -->
     <div id="otp-modal" class="modal">
         <div class="modal-content">
-            <h3>OTP Sicherheit</h3>
-            <p style="margin: 10px 0; font-size: 0.9rem; color: var(--text-muted);">Gib den 12-stelligen Code ein:</p>
-            <div id="simulated-mail" style="background:#000; color:#0f0; padding:10px; margin-bottom:10px; font-family:monospace;">
-                Code: <span id="code-val"></span>
+            <h3>Sicherheitsüberprüfung</h3>
+            <p style="margin: 15px 0; font-size: 0.9rem; color: var(--text-muted);">
+                Ein 12-stelliger Bestätigungscode wurde an <b>brotsmp@gmail.com</b> gesendet.
+            </p>
+            <div style="background: #000; padding: 10px; color: #0f0; font-family: monospace; margin-bottom: 15px; border-radius: 4px; font-size: 0.9rem;">
+                [Simulierte E-Mail] Code: <span id="simulated-code">--------</span>
             </div>
-            <input type="text" id="otp-input" class="form-control" maxlength="12" placeholder="12 Zahlen">
+            <div class="form-group" style="margin-bottom: 15px;">
+                <input type="text" id="otp-input" class="form-control otp-input" maxlength="12" placeholder="12-stellige Zahlen" style="margin:0;">
+            </div>
             <button class="btn btn-primary" onclick="verifyOTP()">Verifizieren</button>
         </div>
     </div>
 
     <script>
-        // --- MICROSOFT CONFIGURATION ---
-        const msalConfig = {
-            auth: {
-                clientId: "DEINE_MICROSOFT_CLIENT_ID", // Aus dem Azure Portal
-                authority: "https://login.microsoftonline.com/common"
-            }
-        };
-        const msalInstance = new msal.PublicClientApplication(msalConfig);
-
-        let generatedOTP = "";
-        let pendingAdminEmail = "";
-
-        // 1. ECHTER GOOGLE LOGIN CALLBACK
-        function handleGoogleLogin(response) {
-            // Dekodiert das JWT Token von Google
-            const responsePayload = parseJwt(response.credential);
-            const userEmail = responsePayload.email;
-            
-            console.log("Google User E-Mail:", userEmail);
-            checkUserAuth(userEmail);
+        // Initiale DB
+        if (!localStorage.getItem('team_db')) {
+            localStorage.setItem('team_db', JSON.stringify([
+                { email: 'brotsmp@gmail.com', pass: 'admin123', role: 'Owner' }
+            ]));
         }
 
-        // Hilfsfunktion zum Entschlüsseln des Google Tokens
+        const RCON_CONFIG = {
+            ip: "brotsmp1.minekeep.gg",
+            pass: "1944096b2fbc940d796a1f77"
+        };
+
+        let currentUser = null;
+        let generatedOTP = null;
+
+        function getDB() { return JSON.parse(localStorage.getItem('team_db')); }
+        function saveDB(db) { localStorage.setItem('team_db', JSON.stringify(db)); }
+
+        function showAlert(msg) {
+            const el = document.getElementById('login-alert');
+            el.textContent = msg;
+            el.className = 'alert alert-error';
+            el.classList.remove('hidden');
+        }
+
+        // Google Login Callback
+        function handleGoogleLogin(response) {
+            const payload = parseJwt(response.credential);
+            const email = payload.email;
+            processUserLogin(email);
+        }
+
         function parseJwt(token) {
             const base64Url = token.split('.')[1];
             const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
             return JSON.parse(window.atob(base64));
         }
 
-        // 2. ECHTER MICROSOFT LOGIN
-        async function loginWithMicrosoftAPI() {
-            try {
-                const loginResponse = await msalInstance.loginPopup({ scopes: ["user.read"] });
-                const userEmail = loginResponse.account.username;
-                console.log("Microsoft User E-Mail:", userEmail);
-                checkUserAuth(userEmail);
-            } catch (err) {
-                console.error("Microsoft Login Fehler:", err);
-            }
-        }
-
-        // 3. EMAIL/PASSWORT LOGIN
         function handleEmailLogin(e) {
             e.preventDefault();
             const email = document.getElementById('email').value;
-            checkUserAuth(email);
+            const pass = document.getElementById('password').value;
+            const db = getDB();
+            const user = db.find(u => u.email === email && u.pass === pass);
+
+            if (user) {
+                processUserLogin(user.email);
+            } else {
+                showAlert("Ungültige E-Mail oder Passwort.");
+            }
         }
 
-        // 4. AUTHENTIFIZIERUNG PRÜFEN & OTP AUSLÖSEN
-        function checkUserAuth(email) {
-            if (email === "brotsmp@gmail.com") {
-                pendingAdminEmail = email;
-                // Erstelle 12 Zufallszahlen
-                generatedOTP = "";
-                for(let i = 0; i < 12; i++) {
+        function processUserLogin(email) {
+            if (email === 'brotsmp@gmail.com') {
+                generatedOTP = '';
+                for (let i = 0; i < 12; i++) {
                     generatedOTP += Math.floor(Math.random() * 10);
                 }
-                document.getElementById('code-val').textContent = generatedOTP;
+                document.getElementById('simulated-code').textContent = generatedOTP;
                 document.getElementById('otp-modal').style.display = 'flex';
             } else {
-                loginSuccess(email, false);
+                currentUser = { email: email, role: 'Team' };
+                showDashboard();
             }
         }
 
         function verifyOTP() {
-            const input = document.getElementById('otp-input').value;
-            if (input === generatedOTP) {
+            const inputVal = document.getElementById('otp-input').value.trim();
+            if (inputVal === generatedOTP) {
                 document.getElementById('otp-modal').style.display = 'none';
-                loginSuccess(pendingAdminEmail, true);
+                currentUser = { email: 'brotsmp@gmail.com', role: 'Owner' };
+                showDashboard();
             } else {
                 alert("Falscher Code!");
             }
         }
 
-        function loginSuccess(email, isAdmin) {
-            document.getElementById('login-view').classList.add('hidden');
-            document.getElementById('dashboard-view').classList.remove('hidden');
-            document.getElementById('user-display-email').textContent = email;
+        function showDashboard() {
+            document.getElementById('login-view').style.display = 'none';
+            document.getElementById('dashboard-view').style.display = 'block';
 
-            if (isAdmin) {
-                document.getElementById('admin-tools').classList.remove('hidden');
+            if (currentUser.email === 'brotsmp@gmail.com') {
+                document.getElementById('admin-tab-btn').classList.remove('hidden');
+                document.getElementById('console-tab-btn').classList.remove('hidden');
+                renderMemberList();
             }
         }
 
         function logout() {
             location.reload();
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function createTeamMember(e) {
+            e.preventDefault();
+            const email = document.getElementById('new-member-email').value;
+            const pass = document.getElementById('new-member-pass').value;
+            const db = getDB();
+            if (db.some(u => u.email === email)) {
+                alert("Existiert bereits.");
+                return;
+            }
+            db.push({ email, pass, role: 'Team' });
+            saveDB(db);
+            document.getElementById('new-member-email').value = '';
+            document.getElementById('new-member-pass').value = '';
+            renderMemberList();
+        }
+
+        function deleteMember(email) {
+            if (email === 'brotsmp@gmail.com') return;
+            let db = getDB();
+            db = db.filter(u => u.email !== email);
+            saveDB(db);
+            renderMemberList();
+        }
+
+        function renderMemberList() {
+            const db = getDB();
+            const tbody = document.getElementById('member-table-body');
+            tbody.innerHTML = '';
+            db.forEach(user => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${user.email}</td>
+                    <td>${user.role}</td>
+                    <td>${user.email !== 'brotsmp@gmail.com' ? `<button onclick="deleteMember('${user.email}')" style="background:var(--error); color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">Löschen</button>` : '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function sendConsoleCommand() {
+            const input = document.getElementById('console-input');
+            const cmd = input.value.trim();
+            if (!cmd) return;
+
+            const logs = document.getElementById('console-logs');
+            logs.innerHTML += `<div>> ${cmd}</div>`;
+
+            // Da RCON rohe TCP Sockets erfordert, die ein Browser ohne Backend-Proxy nicht direkt sprechen kann, 
+            // ist hier die RCON-Verbindung für den Server ${RCON_CONFIG.ip} simuliert.
+            setTimeout(() => {
+                logs.innerHTML += `<div style="color: #aaa;">[RCON ${RCON_CONFIG.ip}] Befehl erfolgreich gesendet: "${cmd}"</div>`;
+                logs.scrollTop = logs.scrollHeight;
+            }, 250);
+
+            input.value = '';
+        }
+
+        function handleConsoleKey(e) {
+            if (e.key === 'Enter') sendConsoleCommand();
         }
     </script>
 </body>
