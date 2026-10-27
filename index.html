@@ -72,7 +72,7 @@
                 </div>
                 <div class="g_id_signin" data-type="standard" data-width="380" style="margin-bottom: 20px; display: flex; justify-content: center;"></div>
 
-                <div style="margin: 20px 0; color: var(--text-muted); position: relative;">
+                <div style="margin: 20px 0; color: var(--text-muted);">
                     <hr style="border: 0; border-top: 1px solid var(--panel-border); margin-top: 10px;">
                 </div>
 
@@ -128,7 +128,7 @@
                     <h3>Server Konsole (<span style="font-size: 0.8rem; color: var(--text-muted);">brotsmp1.minekeep.gg</span>)</h3>
                     <br>
                     <div class="console-logs" id="console-logs">
-                        [System] Verbunden mit RCON Server brotsmp1.minekeep.gg...<br>
+                        [System] Bereit für RCON-Befehle an brotsmp1.minekeep.gg...<br>
                     </div>
                     <div class="console-input-group">
                         <input type="text" id="console-input" class="form-control" placeholder="Befehl eingeben (z.B. list, say Hallo)" onkeypress="handleConsoleKey(event)" style="margin:0;">
@@ -158,7 +158,7 @@
     </div>
 
     <script>
-        // Initiale DB
+        // Initiale DB für Teammitglieder
         if (!localStorage.getItem('team_db')) {
             localStorage.setItem('team_db', JSON.stringify([
                 { email: 'brotsmp@gmail.com', pass: 'admin123', role: 'Owner' }
@@ -211,7 +211,7 @@
         }
 
         function processUserLogin(email) {
-            if (email === 'brotsmp@gmail.com') {
+            if (email.toLowerCase() === 'brotsmp@gmail.com') {
                 generatedOTP = '';
                 for (let i = 0; i < 12; i++) {
                     generatedOTP += Math.floor(Math.random() * 10);
@@ -239,7 +239,7 @@
             document.getElementById('login-view').style.display = 'none';
             document.getElementById('dashboard-view').style.display = 'block';
 
-            if (currentUser.email === 'brotsmp@gmail.com') {
+            if (currentUser.email.toLowerCase() === 'brotsmp@gmail.com') {
                 document.getElementById('admin-tab-btn').classList.remove('hidden');
                 document.getElementById('console-tab-btn').classList.remove('hidden');
                 renderMemberList();
@@ -296,7 +296,7 @@
             });
         }
 
-        function sendConsoleCommand() {
+        async function sendConsoleCommand() {
             const input = document.getElementById('console-input');
             const cmd = input.value.trim();
             if (!cmd) return;
@@ -304,13 +304,22 @@
             const logs = document.getElementById('console-logs');
             logs.innerHTML += `<div>> ${cmd}</div>`;
 
-            // Da RCON rohe TCP Sockets erfordert, die ein Browser ohne Backend-Proxy nicht direkt sprechen kann, 
-            // ist hier die RCON-Verbindung für den Server ${RCON_CONFIG.ip} simuliert.
-            setTimeout(() => {
-                logs.innerHTML += `<div style="color: #aaa;">[RCON ${RCON_CONFIG.ip}] Befehl erfolgreich gesendet: "${cmd}"</div>`;
-                logs.scrollTop = logs.scrollHeight;
-            }, 250);
+            try {
+                // Sobald du ein Backend (z.B. Node.js auf Render) eingerichtet hast, 
+                // trägst du hier deine Backend-URL ein (z.B. 'https://dein-backend.onrender.com/api/rcon')
+                const response = await fetch('https://DEIN-BACKEND.onrender.com/api/rcon', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ command: cmd })
+                });
+                const data = await response.json();
+                logs.innerHTML += `<div style="color: #0f0;">${data.response || 'Befehl gesendet.'}</div>`;
+            } catch (err) {
+                // Fallback, falls kein Backend verbunden ist
+                logs.innerHTML += `<div style="color: #f00;">[Fehler] Kein Backend-Proxy verbunden (RCON erfordert einen Server-Proxy).</div>`;
+            }
 
+            logs.scrollTop = logs.scrollHeight;
             input.value = '';
         }
 
