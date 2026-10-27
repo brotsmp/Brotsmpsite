@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BrotSMP Portal</title>
+    <style>
+        :root {
+            --bg-color: #1a120c;
+            --panel-bg: #2d1e15;
+            --panel-border: #4a3425;
+            --primary-brown: #8b5a2b;
+            --accent-brown: #b87333;
+            --text-light: #f5f0eb;
+            --text-muted: #a89f91;
+            --input-bg: #150d08;
+            --success: #2e7d32;
+            --error: #c62828;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background-color: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid var(--panel-border);
+            background-color: rgba(0,0,0,0.2);
+        }
+
+        .header h1 {
+            color: var(--text-light);
+            font-size: 1.8rem;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .auth-box {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-google {
+            background-color: #ffffff;
+            color: #333333;
+        }
+
+        .btn-microsoft {
+            background-color: #2f2f2f;
+            color: #ffffff;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-brown);
+            color: var(--text-light);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--accent-brown);
+        }
+
+        .divider {
+            text-align: center;
+            margin: 20px 0;
+            color: var(--text-muted);
+            position: relative;
+        }
+
+        .divider::before, .divider::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            width: 40%;
+            height: 1px;
+            background-color: var(--panel-border);
+        }
+
+        .divider::before { left: 0; }
+        .divider::after { right: 0; }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text-muted);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--input-bg);
+            border: 1px solid var(--panel-border);
+            border-radius: 6px;
+            color: var(--text-light);
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--accent-brown);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--panel-border);
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        .otp-input {
+            letter-spacing: 4px;
+            font-size: 1.2rem;
+            text-align: center;
+        }
+
+        .dashboard {
+            display: none;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--panel-border);
+            padding-bottom: 10px;
+        }
+
+        .tab-btn {
+            padding: 8px 16px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1rem;
+            border-radius: 4px;
+        }
+
+        .tab-btn.active {
+            background-color: var(--primary-brown);
+            color: var(--text-light);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .console-logs {
+            background-color: #000;
+            border: 1px solid var(--panel-border);
+            height: 300px;
+            padding: 10px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: #00ff00;
+            margin-bottom: 10px;
+            border-radius: 6px;
+        }
+
+        .console-input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--panel-border);
+        }
+
+        th {
+            background-color: rgba(0,0,0,0.2);
+            color: var(--text-muted);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .alert {
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+
+        .alert-error {
+            background-color: var(--error);
+            color: #fff;
+        }
+
+        .alert-success {
+            background-color: var(--success);
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>BrotSMP Team Portal</h1>
+        </div>
+        <div class="content">
+
+            <!-- LOGIN VIEW -->
+            <div id="login-view" class="auth-box">
+                <div id="login-alert" class="alert hidden"></div>
+
+                <button class="btn btn-google" onclick="loginWithGoogle()">
+                    Mit Google anmelden
+                </button>
+                <button class="btn btn-microsoft" onclick="loginWithMicrosoft()">
+                    Mit Microsoft anmelden
+                </button>
+
+                <div class="divider">oder</div>
+
+                <form id="email-login-form" onsubmit="handleEmailLogin(event)">
+                    <div class="form-group">
+                        <label for="email">E-Mail Adresse</label>
+                        <input type="email" id="email" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Passwort</label>
+                        <input type="password" id="password" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Anmelden</button>
+                </form>
+            </div>
+
+            <!-- DASHBOARD VIEW -->
+            <div id="dashboard-view" class="dashboard">
+                <div class="nav-tabs">
+                    <button class="tab-btn active" onclick="switchTab('team-tools')">Team Tools</button>
+                    <button id="admin-tab-btn" class="tab-btn hidden" onclick="switchTab('admin-panel')">Verwaltung</button>
+                    <button id="console-tab-btn" class="tab-btn hidden" onclick="switchTab('console-panel')">Konsole</button>
+                    <button class="tab-btn" style="margin-left: auto; background-color: #555;" onclick="logout()">Abmelden</button>
+                </div>
+
+                <!-- TEAM TOOLS TAB -->
+                <div id="team-tools" class="tab-content active">
+                    <h3>Team Dashboard</h3>
+                    <p style="margin-top: 10px; color: var(--text-muted);">Willkommen im Team-Bereich. Nutze die verfügbaren Funktionen zur Moderation.</p>
+                    <br>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div style="background: var(--input-bg); padding: 15px; border-radius: 6px; border: 1px solid var(--panel-border);">
+                            <h4>Whitelist</h4>
+                            <p style="font-size: 0.85rem; color: var(--text-muted); margin: 5px 0 10px 0;">Spieler zur Whitelist hinzufügen</p>
+                            <input type="text" class="form-control" placeholder="Spielername" style="margin-bottom: 10px;">
+                            <button class="btn btn-primary" style="padding: 6px;">Hinzufügen</button>
+                        </div>
+                        <div style="background: var(--input-bg); padding: 15px; border-radius: 6px; border: 1px solid var(--panel-border);">
+                            <h4>Tickets</h4>
+                            <p style="font-size: 0.85rem; color: var(--text-muted); margin: 5px 0 10px 0;">Offene Supportanfragen</p>
+                            <p style="font-size: 0.9rem;">Keine offene Tickets vorhanden.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ADMIN MANAGEMENT TAB (Admin only) -->
+                <div id="admin-panel" class="tab-content">
+                    <h3>Teammitglieder Verwaltung</h3>
+                    <br>
+                    <form onsubmit="createTeamMember(event)" style="background: var(--input-bg); padding: 15px; border-radius: 6px; border: 1px solid var(--panel-border); margin-bottom: 20px;">
+                        <h4>Neues Mitglied anlegen</h4>
+                        <br>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                            <input type="email" id="new-member-email" class="form-control" placeholder="E-Mail" required>
+                            <input type="password" id="new-member-pass" class="form-control" placeholder="Passwort" required>
+                            <button type="submit" class="btn btn-primary" style="margin: 0;">Erstellen</button>
+                        </div>
+                    </form>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>E-Mail</th>
+                                <th>Rolle</th>
+                                <th>Aktion</th>
+                            </tr>
+                        </thead>
+                        <tbody id="member-table-body">
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- RCON CONSOLE TAB (Admin only) -->
+                <div id="console-panel" class="tab-content">
+                    <h3>Server Konsole (RCON)</h3>
+                    <br>
+                    <div class="console-logs" id="console-logs">
+                        [System] RCON Verbindung hergestellt zu Server 1...<br>
+                    </div>
+                    <div class="console-input-group">
+                        <input type="text" id="console-input" class="form-control" placeholder="Befehl eingeben (z.B. say Hallo)" onkeypress="handleConsoleKey(event)">
+                        <button class="btn btn-primary" style="width: auto; padding: 0 20px;" onclick="sendConsoleCommand()">Senden</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- OTP MODAL (Admin only) -->
+    <div id="otp-modal" class="modal">
+        <div class="modal-content">
+            <h3>Sicherheitsüberprüfung</h3>
+            <p style="margin: 15px 0; font-size: 0.9rem; color: var(--text-muted);">
+                Ein 12-stelliger Bestätigungscode wurde per E-Mail gesendet. Bitte gib den Code ein.
+            </p>
+            <div id="otp-simulated-display" style="background: #000; padding: 10px; color: #0f0; font-family: monospace; margin-bottom: 15px; border-radius: 4px; font-size: 0.9rem;">
+                [Email-Simulation] Code: <span id="simulated-code">--------</span>
+            </div>
+            <div class="form-group">
+                <input type="text" id="otp-input" class="form-control otp-input" maxlength="12" placeholder="12-stelliger Code">
+            </div>
+            <button class="btn btn-primary" onclick="verifyOTP()">Verifizieren</button>
+        </div>
+    </div>
+
+    <script>
+        // Initiale Datenbank im Browser-Speicher (Simulation)
+        if (!localStorage.getItem('team_db')) {
+            const initialDB = [
+                { email: 'brotsmp@gmail.com', pass: 'admin123', role: 'Owner' }
+            ];
+            localStorage.setItem('team_db', JSON.stringify(initialDB));
+        }
+
+        let currentUser = null;
+        let generatedOTP = null;
+
+        function getDB() {
+            return JSON.parse(localStorage.getItem('team_db'));
+        }
+
+        function saveDB(db) {
+            localStorage.setItem('team_db', JSON.stringify(db));
+        }
+
+        function showAlert(message, isError = true) {
+            const alertEl = document.getElementById('login-alert');
+            alertEl.textContent = message;
+            alertEl.className = `alert ${isError ? 'alert-error' : 'alert-success'}`;
+            alertEl.classList.remove('hidden');
+        }
+
+        function loginWithGoogle() {
+            const simulatedEmail = prompt("Google-Account E-Mail eingeben:", "brotsmp@gmail.com");
+            if (simulatedEmail) {
+                processUserLogin(simulatedEmail);
+            }
+        }
+
+        function loginWithMicrosoft() {
+            const simulatedEmail = prompt("Microsoft-Account E-Mail eingeben:", "user@brotsmp.de");
+            if (simulatedEmail) {
+                processUserLogin(simulatedEmail);
+            }
+        }
+
+        function handleEmailLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+
+            const db = getDB();
+            const user = db.find(u => u.email === email && u.pass === pass);
+
+            if (user) {
+                processUserLogin(user.email);
+            } else {
+                showAlert("Ungültige E-Mail oder Passwort.");
+            }
+        }
+
+        function processUserLogin(email) {
+            if (email === 'brotsmp@gmail.com') {
+                triggerAdminOTP(email);
+            } else {
+                currentUser = { email: email, role: 'Team' };
+                showDashboard();
+            }
+        }
+
+        function triggerAdminOTP(email) {
+            // Generiere 12-stellige Zufallszahl
+            generatedOTP = '';
+            for (let i = 0; i < 12; i++) {
+                generatedOTP += Math.floor(Math.random() * 10);
+            }
+
+            // Zeige simulierten Mail-Versand im UI
+            document.getElementById('simulated-code').textContent = generatedOTP;
+            document.getElementById('otp-modal').style.display = 'flex';
+        }
+
+        function verifyOTP() {
+            const inputVal = document.getElementById('otp-input').value.trim();
+            if (inputVal === generatedOTP) {
+                document.getElementById('otp-modal').style.display = 'none';
+                currentUser = { email: 'brotsmp@gmail.com', role: 'Owner' };
+                showDashboard();
+            } else {
+                alert("Falscher OTP-Code! Zugriff verweigert.");
+            }
+        }
+
+        function showDashboard() {
+            document.getElementById('login-view').style.display = 'none';
+            document.getElementById('dashboard-view').style.display = 'block';
+
+            if (currentUser.email === 'brotsmp@gmail.com') {
+                document.getElementById('admin-tab-btn').classList.remove('hidden');
+                document.getElementById('console-tab-btn').classList.remove('hidden');
+                renderMemberList();
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            document.getElementById('login-view').style.display = 'block';
+            document.getElementById('dashboard-view').style.display = 'none';
+            document.getElementById('admin-tab-btn').classList.add('hidden');
+            document.getElementById('console-tab-btn').classList.add('hidden');
+            document.getElementById('email-login-form').reset();
+            document.getElementById('login-alert').classList.add('hidden');
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function createTeamMember(e) {
+            e.preventDefault();
+            const email = document.getElementById('new-member-email').value;
+            const pass = document.getElementById('new-member-pass').value;
+
+            const db = getDB();
+            if (db.some(u => u.email === email)) {
+                alert("Ein Mitglied mit dieser E-Mail existiert bereits.");
+                return;
+            }
+
+            db.push({ email, pass, role: 'Team' });
+            saveDB(db);
+
+            document.getElementById('new-member-email').value = '';
+            document.getElementById('new-member-pass').value = '';
+            renderMemberList();
+        }
+
+        function deleteMember(email) {
+            if (email === 'brotsmp@gmail.com') {
+                alert("Haupt-Admin kann nicht gelöscht werden.");
+                return;
+            }
+            let db = getDB();
+            db = db.filter(u => u.email !== email);
+            saveDB(db);
+            renderMemberList();
+        }
+
+        function renderMemberList() {
+            const db = getDB();
+            const tbody = document.getElementById('member-table-body');
+            tbody.innerHTML = '';
+
+            db.forEach(user => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${user.email}</td>
+                    <td>${user.role}</td>
+                    <td>
+                        ${user.email !== 'brotsmp@gmail.com' ? `<button onclick="deleteMember('${user.email}')" style="background:var(--error); color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer;">Löschen</button>` : '-'}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function sendConsoleCommand() {
+            const input = document.getElementById('console-input');
+            const cmd = input.value.trim();
+            if (!cmd) return;
+
+            const logs = document.getElementById('console-logs');
+            logs.innerHTML += `<div>> ${cmd}</div>`;
+
+            // Simulierte Server-Antwort
+            setTimeout(() => {
+                logs.innerHTML += `<div style="color: #aaa;">[Server] Befehl "${cmd}" ausgeführt.</div>`;
+                logs.scrollTop = logs.scrollHeight;
+            }, 300);
+
+            input.value = '';
+        }
+
+        function handleConsoleKey(e) {
+            if (e.key === 'Enter') {
+                sendConsoleCommand();
+            }
+        }
+    </script>
+</body>
+</html>
